@@ -34,6 +34,8 @@ podir = meson.project_source_root() / 'po'
 gettext_package = meson.project_name()
 
 if get_option('profile') == 'development'
+  message('Building in debug mode')
+
   profile = 'Devel'
   vcs_tag = run_command('git', 'rev-parse', '--short', 'HEAD', check: false).stdout().strip()
   if vcs_tag == ''
@@ -42,16 +44,33 @@ if get_option('profile') == 'development'
     version_suffix = '-@0@'.format(vcs_tag)
   endif
   application_id = '@0@.@1@'.format(base_id, profile)
+
+  cargo_release_option = []
+  rust_target = 'debug'
 else
+  message('Building in release mode')
+
   profile = ''
   version_suffix = ''
   application_id = base_id
+  cargo_release_option = [ '--release' ]
+  rust_target = 'release'
 endif
 
+cargo_home = meson.project_build_root() / 'cargo-home'
+cargo_target = meson.project_build_root() / 'cargo-target'
+
+cargo_env = environment()
+cargo_env.set('CARGO_HOME', cargo_home)
+cargo_env.set('CARGO_TARGET_DIR', cargo_target)
+meson.add_devenv(cargo_env)
+
+# Required if you run dist though
+find_program('cargo-vendor-filterer', required: false)
 meson.add_dist_script(
   'build-aux/dist-vendor.sh',
-  meson.project_build_root() / 'meson-dist' / meson.project_name() + '-' + version,
-  meson.project_source_root()
+  cargo_home,
+  cargo_target,
 )
 
 if get_option('profile') == 'development'
@@ -63,6 +82,20 @@ endif
 subdir('data')
 subdir('po')
 subdir('src')
+
+test (
+  'cargo-test',
+  cargo,
+  args: [
+    'test',
+    cargo_release_option,
+    '--all-targets',
+    '--all-features',
+    '--workspace',
+  ],
+  env: cargo_env,
+  timeout: 400,
+)
 
 gnome.post_install(
   gtk_update_icon_cache: true,
