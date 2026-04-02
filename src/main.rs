@@ -1,6 +1,5 @@
-#[rustfmt::skip]
-mod config;
 mod app;
+mod config;
 mod modals;
 
 use config::{APP_ID, GETTEXT_PACKAGE, LOCALEDIR, RESOURCES_FILE};
@@ -48,4 +47,16 @@ fn main() {
         .unwrap();
     relm4::set_global_css(&glib::GString::from_utf8_checked(data.to_vec()).unwrap());
     app.visible_on_activate(false).run::<App>(());
+}
+
+#[cfg(test)]
+mod tests {
+    #[allow(unused)]
+    use super::*;
+
+    #[test]
+    fn it_works() {
+        let result = 2 + 2;
+        assert_eq!(result, 4);
+    }
 }
