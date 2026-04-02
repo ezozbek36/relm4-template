@@ -46,6 +46,7 @@ in
       appstream
       desktop-file-utils
       rustPlatform.cargoSetupHook
+      libxml2
     ];
 
     # Runtime dependencies which will be shipped
